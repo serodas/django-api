@@ -9,9 +9,9 @@
 
 | **Endpoint** | **Role**| **Method** | **Purpose** |
 | --- | --- | --- | --- |
-| /api/users | No role required | POST | Creates a new user with name, email and password |
-| /api/users/users/me/ | Anyone with a valid user token | GET | Displays only the current user |
-| /token/login/ | Anyone with a valid username and password | POST | Generates access tokens that can be used in other API calls in this project |
+| /auth/users | No role required | POST | Creates a new user with name, email and password |
+| /auth/users/me/ | Anyone with a valid user token | GET | Displays only the current user |
+| /auth/token/login/ | Anyone with a valid username and password | POST | Generates access tokens that can be used in other API calls in this project |
 
 ## Menu-items endpoints
 
