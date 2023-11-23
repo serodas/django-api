@@ -7,4 +7,7 @@ urlpatterns = [
   path('menu-items/<int:pk>', views.menu_item),
   path('groups/manager/users', views.managers),
   path('groups/manager/users/<int:pk>', views.remove_manager),
+  path('groups/delivery-crew/users', views.delivery_crews),
+  path('groups/delivery-crew/users/<int:pk>', views.remove_delivery_crew),
+  
 ]
