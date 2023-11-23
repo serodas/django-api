@@ -10,4 +10,5 @@ urlpatterns = [
   path('groups/delivery-crew/users', views.delivery_crews),
   path('groups/delivery-crew/users/<int:pk>', views.remove_delivery_crew),
   path('cart/menu-items', views.cart_menu_items),
+  path('cart/menu-items/<int:pk>', views.remove_cart_menu_item),
 ]

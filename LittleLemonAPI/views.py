@@ -111,3 +111,10 @@ def cart_menu_items(request):
     serialized_cart.is_valid(raise_exception=True)
     serialized_cart.save()
     return Response(serialized_cart.data, status=status.HTTP_201_CREATED)
+
+@api_view(['DELETE'])
+def remove_cart_menu_item(request, pk):
+  if request.method == 'DELETE':
+    cart_menu_item = get_object_or_404(Cart, pk=pk)
+    cart_menu_item.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
