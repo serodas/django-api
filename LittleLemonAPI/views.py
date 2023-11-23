@@ -62,3 +62,13 @@ def managers(request):
       managers.user_set.add(user)
       return Response(status=status.HTTP_201_CREATED)
   return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
+
+@api_view(['DELETE'])
+def remove_manager(request, pk):
+  if request.user.groups.filter(name='Manager').exists():
+    if request.method == 'DELETE':
+      user = get_object_or_404(User, pk=pk)
+      managers = Group.objects.get(name='Manager')
+      managers.user_set.remove(user)
+      return Response(status=status.HTTP_204_NO_CONTENT)
+  return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
