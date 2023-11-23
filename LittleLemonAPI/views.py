@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from .models import MenuItem, Category, Cart
-from .serializers import MenuItemSerializer, CategorySerializer, UserSerializer, CartSerializer
+from .models import MenuItem, Category, Cart, Order, OrderItem
+from .serializers import MenuItemSerializer, CategorySerializer, UserSerializer, CartSerializer, OrderSerializer, OrderItemSerializer
 from django.contrib.auth.models import User, Group
+from django.core.paginator import Paginator, EmptyPage
 
 @permission_classes([IsAdminUser])
 class CategoriesView(generics.CreateAPIView):
@@ -14,9 +15,40 @@ class CategoriesView(generics.CreateAPIView):
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def menu_items(request):   
+def menu_items(request):
   if request.method == 'GET':
     items = MenuItem.objects.select_related('category').all()
+    
+    search =  request.query_params.get('search')
+    ordering = request.query_params.get('ordering')
+    perpage = request.query_params.get('perpage', default=1)
+    page = request.query_params.get('page', default=1)
+    
+    title = request.query_params.get('title')
+    price = request.query_params.get('price')
+    featured = request.query_params.get('featured')
+    category_slug = request.query_params.get('category')
+    if title:
+      items = items.filter(title=title)
+    if price:
+      items = items.filter(price=price)
+    if featured:
+      items = items.filter(featured=featured)
+    if category_slug:
+      items = items.filter(category__slug=category_slug)
+    if search:
+      items = items.filter(title__contains=search)
+    if ordering:
+      ordering_fields = ordering.split(",")
+      items = items.order_by(*ordering_fields)
+    else:
+      items = items.order_by('id')
+
+    paginator = Paginator(items, per_page = perpage)
+    try :
+      items = paginator.page(number = page)
+    except EmptyPage:
+      items = []
     serialized_items = MenuItemSerializer(items, many=True)
     return Response(serialized_items.data)
   if request.method == 'POST':
@@ -25,7 +57,6 @@ def menu_items(request):
       serialized_item.is_valid(raise_exception=True)
       serialized_item.save()
       return Response(serialized_item.data, status=status.HTTP_201_CREATED)
-    return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
 
 @api_view(['GET', 'PUT', 'DELETE', 'PATCH'])
 @permission_classes([IsAuthenticated])
@@ -126,3 +157,20 @@ def remove_cart_menu_item(request, pk):
     cart_menu_item = get_object_or_404(Cart, pk=pk)
     cart_menu_item.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+  
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def orders(request):
+  if request.method == 'GET':
+    if request.user.groups.filter(name='Manager').exists():
+      orders = Order.objects.select_related('user','delivery_crew').all()
+      serialized_orders = OrderSerializer(orders, many=True)
+      return Response(serialized_orders.data)
+    elif request.user.groups.filter(name='Delivery crew').exists():
+      orders = Order.objects.select_related('user','delivery_crew').filter(delivery_crew=request.user.id)
+      serialized_orders = OrderSerializer(orders, many=True)
+      return Response(serialized_orders.data)
+    else:
+      orders = Order.objects.select_related('user','delivery_crew').filter(user=request.user.id)
+      serialized_orders = OrderSerializer(orders, many=True)
+      return Response(serialized_orders.data)
