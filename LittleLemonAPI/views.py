@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from .models import MenuItem, Category, Cart
@@ -13,6 +13,7 @@ class CategoriesView(generics.CreateAPIView):
     serializer_class = CategorySerializer
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def menu_items(request):   
   if request.method == 'GET':
     items = MenuItem.objects.select_related('category').all()
@@ -27,6 +28,7 @@ def menu_items(request):
     return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
 
 @api_view(['GET', 'PUT', 'DELETE', 'PATCH'])
+@permission_classes([IsAuthenticated])
 def menu_item(request, pk):
   if request.method == 'GET':
     item = get_object_or_404(MenuItem, pk=pk)
@@ -51,6 +53,7 @@ def menu_item(request, pk):
     return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
   
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def managers(request):
   if request.user.groups.filter(name='Manager').exists():
     if request.method == 'GET':
@@ -66,6 +69,7 @@ def managers(request):
   return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def remove_manager(request, pk):
   if request.user.groups.filter(name='Manager').exists():
     if request.method == 'DELETE':
@@ -76,6 +80,7 @@ def remove_manager(request, pk):
   return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def delivery_crews(request):
   if request.user.groups.filter(name='Manager').exists():
     if request.method == 'GET':
@@ -91,6 +96,7 @@ def delivery_crews(request):
   return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def remove_delivery_crew(request, pk):
   if request.user.groups.filter(name='Manager').exists():
     if request.method == 'DELETE':
@@ -101,6 +107,7 @@ def remove_delivery_crew(request, pk):
   return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def cart_menu_items(request):
   if request.method == 'GET':
     cart_menu_items = Cart.objects.filter(user=request.user.id)
@@ -113,6 +120,7 @@ def cart_menu_items(request):
     return Response(serialized_cart.data, status=status.HTTP_201_CREATED)
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def remove_cart_menu_item(request, pk):
   if request.method == 'DELETE':
     cart_menu_item = get_object_or_404(Cart, pk=pk)
