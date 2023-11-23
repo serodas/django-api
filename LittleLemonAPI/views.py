@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from .models import MenuItem, Category
-from .serializers import MenuItemSerializer, CategorySerializer
+from .serializers import MenuItemSerializer, CategorySerializer, UserSerializer
+from django.contrib.auth.models import User, Group
 
 class CategoriesView(generics.CreateAPIView):
     queryset = Category.objects.all()
@@ -23,7 +24,7 @@ def menu_items(request):
       return Response(serialized_item.data, status=status.HTTP_201_CREATED)
     return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
 
-@api_view(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+@api_view(['GET', 'PUT', 'DELETE', 'PATCH'])
 def menu_item(request, pk):
   if request.method == 'GET':
     item = get_object_or_404(MenuItem, pk=pk)
@@ -46,3 +47,18 @@ def menu_item(request, pk):
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
+  
+@api_view(['GET', 'POST'])
+def managers(request):
+  if request.user.groups.filter(name='Manager').exists():
+    if request.method == 'GET':
+      managers = User.objects.filter(groups__name='Manager')
+      serialized_managers = UserSerializer(managers, many=True)
+      return Response(serialized_managers.data)
+    elif request.method == 'POST':
+      username = request.data.get('username')
+      user = get_object_or_404(User, username=username)
+      managers = Group.objects.get(name='Manager')
+      managers.user_set.add(user)
+      return Response(status=status.HTTP_201_CREATED)
+  return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
