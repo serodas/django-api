@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from .models import MenuItem, Category
-from .serializers import MenuItemSerializer, CategorySerializer, UserSerializer
+from .models import MenuItem, Category, Cart
+from .serializers import MenuItemSerializer, CategorySerializer, UserSerializer, CartSerializer
 from django.contrib.auth.models import User, Group
 
 @permission_classes([IsAdminUser])
@@ -99,3 +99,15 @@ def remove_delivery_crew(request, pk):
       delivery_crews.user_set.remove(user)
       return Response(status=status.HTTP_204_NO_CONTENT)
   return Response({'detail': 'You do not have permission to perform this action.'}, status=status.HTTP_403_FORBIDDEN)
+
+@api_view(['GET', 'POST'])
+def cart_menu_items(request):
+  if request.method == 'GET':
+    cart_menu_items = Cart.objects.filter(user=request.user.id)
+    serialized_cart_menu_items = CartSerializer(cart_menu_items, many=True)
+    return Response(serialized_cart_menu_items.data)
+  elif request.method == 'POST':
+    serialized_cart = CartSerializer(data=request.data)
+    serialized_cart.is_valid(raise_exception=True)
+    serialized_cart.save()
+    return Response(serialized_cart.data, status=status.HTTP_201_CREATED)
