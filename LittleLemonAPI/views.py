@@ -93,6 +93,7 @@ class OrderView(generics.ListCreateAPIView):
             result = order_serializer.data.copy()
             result['total'] = total
             return Response(order_serializer.data)
+        return Response(order_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def get_total_price(self, user):
         total = 0
@@ -146,7 +147,7 @@ class DeliveryCrewViewSet(viewsets.ViewSet):
                 return Response({"message":"forbidden"}, status.HTTP_403_FORBIDDEN)
         
         user = get_object_or_404(User, username=request.data['username'])
-        dc = Group.objects.get(name="Delivery Crew")
+        dc = Group.objects.get(name="Delivery crew")
         dc.user_set.add(user)
         return Response({"message": "user added to the delivery crew group"}, 200)
 
